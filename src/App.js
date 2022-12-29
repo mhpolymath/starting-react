@@ -1,49 +1,69 @@
-//#import-region
-import React from 'react';
-import PropTypes from 'prop-types';
-import './App.css';
-import styled from '@emotion/styled';
-import { Button } from '@material-ui/core';
+//imports
+//#region
+import React from "react";
+import PropTypes from "prop-types";
+import styled from "@emotion/styled";
+import { Button, CssBaseline } from "@material-ui/core";
+import "./App.css";
 
-//#import-endregion
+//#endregion
 
-//#PokemonRow-region
-const PokemonRow = ({pokemon, onSelect}) => (
-  <tr>
-    <td>{pokemon.name.english}</td>
-    <td>{pokemon.type.join(", ")}</td>
-    <td>
-      <Button 
-      variant="contained" 
-      color="primary" 
-      onClick={() => onSelect(pokemon)}>More Info</Button>
-    </td>
-  </tr>
+
+//PokemonType
+//#region
+const PokemonType = PropTypes.shape({
+  id: PropTypes.string.isRequired,
+  name: PropTypes.shape({
+    english: PropTypes.string.isRequired,
+    japanese: PropTypes.string.isRequired,
+    chinese: PropTypes.string.isRequired,
+    french: PropTypes.string.isRequired,
+  }),
+  type: PropTypes.arrayOf(PropTypes.string.isRequired),
+  base: PropTypes.shape({
+    HP: PropTypes.number.isRequired,
+    Attack: PropTypes.number.isRequired,
+    Defense: PropTypes.number.isRequired,
+    "Sp. Attack": PropTypes.number.isRequired,
+    "Sp. Defense": PropTypes.number.isRequired,
+    Speed: PropTypes.number.isRequired,
+  }),
+});
+//#endregion
+
+
+//PokemonRow
+//#region
+const PokemonRow = ({ pokemon, onClick }) => (
+  <>
+    <tr key={pokemon.id}>
+      <td>{pokemon.name.english}</td>
+      <td>{pokemon.type.join(", ")}</td>
+      <td>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => onClick(pokemon)}
+        >
+          More Information
+        </Button>
+      </td>
+    </tr>
+  </>
 );
 
 PokemonRow.propTypes = {
-  pokemon: PropTypes.shape({
-    name: PropTypes.shape({
-      english: PropTypes.string.isRequired,
-    }),
-    type: PropTypes.arrayOf(PropTypes.string.isRequired),
-  }),
-  onSelect: PropTypes.func.isRequired,
-}
-//#PokemonRow-endregion
+  pokemon: PropTypes.arrayOf(PokemonType),
+};
+//#endregion
 
-//#PokemonInfo-region
-const PokemonInfo = ({name , base}) => (
+
+//PokemonInfo
+//#region
+const PokemonInfo = ({ name: { english }, base }) => (
   <div>
-    <h1>{name.english}</h1> 
-    <table className='props-table'>
-      <thead>
-        <tr>
-          <th>Proprety</th>
-          <th>Value</th>
-        </tr>
-      </thead>
-
+    <h2>{english}</h2>
+    <table>
       <tbody>
         {Object.keys(base).map((key) => (
           <tr key={key}>
@@ -55,102 +75,88 @@ const PokemonInfo = ({name , base}) => (
     </table>
   </div>
 );
+//#endregion
 
-PokemonInfo.propTypes = {
-  name: PropTypes.shape({
-    english: PropTypes.string.isRequired,
-  }),
-  base: PropTypes.shape({
-    HP: PropTypes.number.isRequired,
-    Attack: PropTypes.number.isRequired,
-    Defense: PropTypes.number.isRequired,
-    "Sp. Attack": PropTypes.number.isRequired,
-    "Sp. Defense": PropTypes.number.isRequired,
-    Speed: PropTypes.number.isRequired,
-  }),
-};
-//#PokemonInfo-endregion
 
-//#Styles-region
+//Styles
+//#region
 
 const Title = styled.h1`
-text-align: center`;
-
-const TwoColumnLayout = styled.div`
-  display:grid;
-  grid-template-columns: 70% 70%;
-  grid-column-gap: 1rem;
-  `;
-
-const Container = styled.div`
+  text-align: center;
+`;
+const PageContainer = styled.div`
   margin: auto;
   width: 800px;
-  padding-top: 1rem;
-  `;
-
+  padding-top: 1em;
+`;
+const TwoColumnLayout = styled.div`
+  display: grid;
+  grid-template-columns: 80% 20%;
+  grid-column-gap: 1rem;
+`;
 const Input = styled.input`
   width: 100%;
-  font-size: x-large;
   padding: 0.2rem;
+  font-size: large;
 `;
-
-//#Styles-endregion
-
-//#AppComp-region
+//#endregion
 
 
-function App(){
+//AppComp
+//#region
+function App() {
   const [filter, filterSet] = React.useState("");
-  const [pokemon, pokemonSet] = React.useState([]);
-  const [selectedItem, selectedItemSet] = React.useState(null);
-  
-  React.useEffect(() => {
-    fetch('http://localhost:3000/starting-react/pokemon.json')
-      .then((resp) => resp.json())
-      .then((data) => pokemonSet(data))});
+  const [pokemon, pokemonSet] = React.useState(null);
+  const [selectedPokemon, selectedPokemonSet] = React.useState(null);
 
-  
-  
+  React.useEffect(() => {
+    fetch("/starting-react/pokemon.json")
+      .then((resp) => resp.json())
+      .then((data) => pokemonSet(data));
+  }, []);
+
+  if (!pokemon) {
+    return <div>Loading data</div>;
+  }
 
   return (
-    <Container>
+    <PageContainer>
+      <CssBaseline />
       <Title>Pokemon Search</Title>
-      
       <TwoColumnLayout>
         <div>
           <Input
-          value={filter}
-          onChange={(evt) => filterSet(evt.target.value)}
+            type="text"
+            value={filter}
+            onChange={(evt) => filterSet(evt.target.value)}
           />
-          <table className="thine-table" width="100%">
-              <thead>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-              </tr>
-            </thead>
+          <table width="100%">
             <tbody>
               {pokemon
-              .filter((pokemon) => (pokemon.name.english.toLowerCase().includes(filter.toLowerCase())))
-              .slice(0,20)
-              .map((pokemon) => (
-              <PokemonRow 
-              pokemon={pokemon} 
-              key = {pokemon.id} 
-              onSelect={(pokemon) => selectedItemSet(pokemon)}
-              />
-              ))}
-              
-            
+                .filter(({ name: { english } }) =>
+                  english
+                    .toLocaleLowerCase()
+                    .includes(filter.toLocaleLowerCase())
+                )
+                .slice(0, 20)
+                .map((pokemon) => (
+                  <PokemonRow
+                    pokemon={pokemon}
+                    onClick={(pokemon) => selectedPokemonSet(pokemon)}
+                  />
+                ))}
             </tbody>
           </table>
         </div>
-        {selectedItem && <PokemonInfo {... selectedItem}/>}
-      </TwoColumnLayout>      
-    </Container>
+        {selectedPokemon && <PokemonInfo {...selectedPokemon} />}
+      </TwoColumnLayout>
+    </PageContainer>
   );
-}
-//#AppComp-endregion
+};
+//#endregion
 
+
+//Exports
+//#region
 export default App;
-
+//#endregion
